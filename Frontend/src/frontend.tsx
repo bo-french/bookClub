@@ -7,12 +7,21 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { App } from "./App";
+
+const CLERK_KEY = process.env.BUN_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!CLERK_KEY) {
+  throw new Error("Missing BUN_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable");
+}
 
 const elem = document.getElementById("root")!;
 const app = (
   <StrictMode>
-    <App />
+    <ClerkProvider publishableKey={CLERK_KEY!}>
+      <App />
+    </ClerkProvider>
   </StrictMode>
 );
 
