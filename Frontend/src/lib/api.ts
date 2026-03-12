@@ -4,9 +4,12 @@ const API_URL = typeof window !== 'undefined'
 
 export async function apiClient(path: string, options: RequestInit = {}, token?: string | null) {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...options.headers as Record<string, string>,
   };
+
+  if (options.body) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
