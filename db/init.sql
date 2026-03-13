@@ -30,3 +30,24 @@ CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- Nomination windows: tracks each period when nominations are open
+CREATE TABLE IF NOT EXISTS nomination_windows (
+  id SERIAL PRIMARY KEY,
+  opened_by INTEGER NOT NULL REFERENCES users(id),
+  deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Nominations: one per user per window
+CREATE TABLE IF NOT EXISTS nominations (
+  id SERIAL PRIMARY KEY,
+  window_id INTEGER NOT NULL REFERENCES nomination_windows(id),
+  nominated_by INTEGER NOT NULL REFERENCES users(id),
+  title VARCHAR(500) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  summary TEXT NOT NULL,
+  pitch TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (window_id, nominated_by)
+);

@@ -1,9 +1,10 @@
 import { useUser, useAuth, useClerk } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Header } from "./Header";
+import { NominationsSection } from "./NominationsSection";
 
 interface UserInfo {
   id: number;
@@ -81,10 +82,12 @@ export function Dashboard() {
 
   return (
     <>
-    <Header />
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <h1>Welcome to BookClub</h1>
-    </div>
+      <Header />
+      <main className="min-h-screen p-6">
+        {userInfo && (
+          <NominationsSection currentUserClerkId={userInfo.clerk_id} />
+        )}
+      </main>
     </>
   );
 }

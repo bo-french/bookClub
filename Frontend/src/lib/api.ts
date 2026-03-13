@@ -26,3 +26,51 @@ export async function apiClient(path: string, options: RequestInit = {}, token?:
 
   return response.json();
 }
+
+// --- Nominations ---
+
+export interface NominationWindow {
+  id: number;
+  opened_by: number;
+  deadline: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface Nomination {
+  id: number;
+  title: string;
+  author: string;
+  summary: string;
+  pitch: string | null;
+  created_at: string;
+  nominated_by_clerk_id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+export interface CurrentWindowResponse {
+  window: NominationWindow | null;
+  nominations: Nomination[];
+}
+
+export function getCurrentWindow(token: string): Promise<CurrentWindowResponse> {
+  return apiClient('/nomination-windows/current', {}, token);
+}
+
+export function openNominationWindow(token: string, deadline: string): Promise<CurrentWindowResponse> {
+  return apiClient('/nomination-windows', {
+    method: 'POST',
+    body: JSON.stringify({ deadline }),
+  }, token);
+}
+
+export function submitNomination(
+  token: string,
+  data: { title: string; author: string; summary: string; pitch?: string }
+): Promise<Nomination> {
+  return apiClient('/nominations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, token);
+}
