@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Header } from "./Header";
 
 interface UserInfo {
   id: number;
@@ -79,32 +80,11 @@ export function Dashboard() {
   }
 
   return (
+    <>
+    <Header />
     <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to Book Club</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
-          {(userInfo?.image_url || user?.imageUrl) && (
-            <img
-              src={userInfo?.image_url || user?.imageUrl}
-              alt={displayName}
-              className="w-20 h-20 rounded-full border-2 border-muted"
-            />
-          )}
-          <div className="text-center space-y-1">
-            <p className="text-lg font-semibold">
-              {displayName}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {userInfo?.email || user?.primaryEmailAddress?.emailAddress}
-            </p>
-          </div>
-          <Button onClick={handleSignOut} variant="outline" className="w-full mt-4">
-            Sign Out
-          </Button>
-        </CardContent>
-      </Card>
+      <h1>Welcome to BookClub</h1>
     </div>
+    </>
   );
 }
