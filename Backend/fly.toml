@@ -1,5 +1,5 @@
 app = "bookclub-backend"
-primary_region = "sea"
+primary_region = "sjc"
 
 [env]
   NODE_ENV = "production"
