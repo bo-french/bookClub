@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Header } from "./Header";
 import { NominationsSection } from "./NominationsSection";
+import { VotingSection } from "./VotingSection";
 
 interface UserInfo {
   id: number;
@@ -24,6 +25,7 @@ export function Dashboard() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [votingRefreshKey, setVotingRefreshKey] = useState(0);
 
   useEffect(() => {
     async function syncAndFetchUser() {
@@ -85,7 +87,16 @@ export function Dashboard() {
       <Header />
       <main className="min-h-screen p-6">
         {userInfo && (
-          <NominationsSection currentUserClerkId={userInfo.clerk_id} />
+          <>
+            <NominationsSection
+              currentUserClerkId={userInfo.clerk_id}
+              onNominationWindowChange={() => setVotingRefreshKey((k) => k + 1)}
+            />
+            <VotingSection
+              currentUserClerkId={userInfo.clerk_id}
+              refreshKey={votingRefreshKey}
+            />
+          </>
         )}
       </main>
     </>

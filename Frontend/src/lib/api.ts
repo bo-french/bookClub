@@ -74,3 +74,59 @@ export function submitNomination(
     body: JSON.stringify(data),
   }, token);
 }
+
+// --- Voting ---
+
+export interface VotingWindow {
+  id: number;
+  nomination_window_id: number;
+  opened_by: number;
+  deadline: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface NomineeWithVotes extends Nomination {
+  vote_count: number;
+}
+
+export interface CurrentVotingResponse {
+  voting_window: VotingWindow | null;
+  nomination_window: { id: number; deadline: string; is_active: boolean } | null;
+  nominees: NomineeWithVotes[];
+  user_vote: { nomination_id: number } | null;
+}
+
+export function getCurrentVotingWindow(token: string): Promise<CurrentVotingResponse> {
+  return apiClient('/voting-windows/current', {}, token);
+}
+
+export function openVotingWindow(token: string, deadline: string): Promise<{ voting_window: VotingWindow }> {
+  return apiClient('/voting-windows', {
+    method: 'POST',
+    body: JSON.stringify({ deadline }),
+  }, token);
+}
+
+export function castVote(token: string, nomination_id: number): Promise<{ id: number; nomination_id: number; created_at: string }> {
+  return apiClient('/votes', {
+    method: 'POST',
+    body: JSON.stringify({ nomination_id }),
+  }, token);
+}
+
+export function closeNominationWindowEarly(token: string, id: number): Promise<{ window: NominationWindow }> {
+  return apiClient(`/nomination-windows/${id}/close`, { method: 'POST' }, token);
+}
+
+export function cancelNominationWindow(token: string, id: number): Promise<{ success: boolean }> {
+  return apiClient(`/nomination-windows/${id}`, { method: 'DELETE' }, token);
+}
+
+export function closeVotingWindowEarly(token: string, id: number): Promise<{ voting_window: VotingWindow }> {
+  return apiClient(`/voting-windows/${id}/close`, { method: 'POST' }, token);
+}
+
+export function cancelVotingWindow(token: string, id: number): Promise<{ success: boolean }> {
+  return apiClient(`/voting-windows/${id}`, { method: 'DELETE' }, token);
+}
