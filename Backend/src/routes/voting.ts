@@ -229,10 +229,10 @@ export default async function votingRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // DELETE /voting-windows/:id
+  // POST /voting-windows/:id/cancel
   // Cancel the voting window and delete all votes. Returns to nominations-closed state.
-  fastify.delete(
-    "/voting-windows/:id",
+  fastify.post(
+    "/voting-windows/:id/cancel",
     { preHandler: fastify.authenticate },
     async (request, reply) => {
       const { id } = request.params as { id: string };

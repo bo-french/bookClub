@@ -120,7 +120,7 @@ export function closeNominationWindowEarly(token: string, id: number): Promise<{
 }
 
 export function cancelNominationWindow(token: string, id: number): Promise<{ success: boolean }> {
-  return apiClient(`/nomination-windows/${id}`, { method: 'DELETE' }, token);
+  return apiClient(`/nomination-windows/${id}/cancel`, { method: 'POST' }, token);
 }
 
 export function closeVotingWindowEarly(token: string, id: number): Promise<{ voting_window: VotingWindow }> {
@@ -128,5 +128,5 @@ export function closeVotingWindowEarly(token: string, id: number): Promise<{ vot
 }
 
 export function cancelVotingWindow(token: string, id: number): Promise<{ success: boolean }> {
-  return apiClient(`/voting-windows/${id}`, { method: 'DELETE' }, token);
+  return apiClient(`/voting-windows/${id}/cancel`, { method: 'POST' }, token);
 }

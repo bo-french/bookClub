@@ -171,10 +171,10 @@ export default async function nominationRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // DELETE /nomination-windows/:id
+  // POST /nomination-windows/:id/cancel
   // Cancel the nomination window and delete all associated nominations.
-  fastify.delete(
-    "/nomination-windows/:id",
+  fastify.post(
+    "/nomination-windows/:id/cancel",
     { preHandler: fastify.authenticate },
     async (request, reply) => {
       const { id } = request.params as { id: string };
