@@ -61,12 +61,14 @@ CREATE TABLE IF NOT EXISTS voting_windows (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Votes: one per user per voting window
+-- Votes: ranked choice — one row per voter per nomination, with rank
 CREATE TABLE IF NOT EXISTS votes (
   id SERIAL PRIMARY KEY,
   voting_window_id INTEGER NOT NULL REFERENCES voting_windows(id),
   voter_id INTEGER NOT NULL REFERENCES users(id),
   nomination_id INTEGER NOT NULL REFERENCES nominations(id),
+  rank INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE (voting_window_id, voter_id)
+  UNIQUE (voting_window_id, voter_id, nomination_id),
+  UNIQUE (voting_window_id, voter_id, rank)
 );
