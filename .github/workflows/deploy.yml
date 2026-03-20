@@ -52,14 +52,18 @@ jobs:
           flyctl deploy --app bookclub-backend --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:${{ github.sha }} 2>&1 | tee deploy-output.txt
           exit_code=${PIPESTATUS[0]}
           if [ $exit_code -ne 0 ]; then
-            if grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
+            if grep -qi "unauthorized" deploy-output.txt; then
+              echo "::error::Backend deployment failed — FLY_API_TOKEN is invalid or expired. Generate a new token with 'fly tokens create org' and update the FLY_BACKEND_API_TOKEN / FLY_FRONTEND_API_TOKEN secret in GitHub repo settings."
+            elif grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
               echo "::warning::Backend deployment failed — Fly.io machines may be stopped or scaled to zero. The Docker image was pushed successfully to DockerHub. You can manually deploy by running: flyctl deploy --app bookclub-backend --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:${{ github.sha }}"
               echo "machines_down=true" >> $GITHUB_OUTPUT
+            else
+              echo "::error::Backend deployment failed with an unexpected error. Check the deploy output above for details."
             fi
             exit $exit_code
           fi
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_BACKEND_API_TOKEN }}
       - name: Verify backend is healthy
         if: steps.fly-deploy.outputs.machines_down != 'true'
         run: |
@@ -100,14 +104,18 @@ jobs:
           flyctl deploy --app bookclub-frontend --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:${{ github.sha }} 2>&1 | tee deploy-output.txt
           exit_code=${PIPESTATUS[0]}
           if [ $exit_code -ne 0 ]; then
-            if grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
+            if grep -qi "unauthorized" deploy-output.txt; then
+              echo "::error::Frontend deployment failed — FLY_API_TOKEN is invalid or expired. Generate a new token with 'fly tokens create org' and update the FLY_BACKEND_API_TOKEN / FLY_FRONTEND_API_TOKEN secret in GitHub repo settings."
+            elif grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
               echo "::warning::Frontend deployment failed — Fly.io machines may be stopped or scaled to zero. The Docker image was pushed successfully to DockerHub. You can manually deploy by running: flyctl deploy --app bookclub-frontend --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:${{ github.sha }}"
               echo "machines_down=true" >> $GITHUB_OUTPUT
+            else
+              echo "::error::Frontend deployment failed with an unexpected error. Check the deploy output above for details."
             fi
             exit $exit_code
           fi
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_FRONTEND_API_TOKEN }}
       - name: Verify frontend is healthy
         if: steps.fly-deploy.outputs.machines_down != 'true'
         run: |
