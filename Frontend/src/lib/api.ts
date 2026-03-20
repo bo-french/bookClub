@@ -115,6 +115,18 @@ export function castVote(token: string, nomination_id: number): Promise<{ id: nu
   }, token);
 }
 
+// --- Past Results ---
+
+export interface PastVotingResponse {
+  voting_window: VotingWindow | null;
+  nomination_window: { id: number; deadline: string; created_at: string } | null;
+  nominees: NomineeWithVotes[];
+}
+
+export function getPastVotingResults(token: string): Promise<PastVotingResponse> {
+  return apiClient('/voting-windows/past', {}, token);
+}
+
 // --- Books ---
 
 export function getBookCoverUrl(

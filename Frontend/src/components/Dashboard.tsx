@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "./Header";
 import { NominationsSection } from "./NominationsSection";
 import { VotingSection } from "./VotingSection";
+import { PastNominationsSection } from "./PastNominationsSection";
 
 interface UserInfo {
   id: number;
@@ -88,6 +89,7 @@ export function Dashboard() {
       <main className="min-h-screen p-6">
         {userInfo && (
           <>
+            <PastNominationsSection />
             <NominationsSection
               currentUserClerkId={userInfo.clerk_id}
               onNominationWindowChange={() => setVotingRefreshKey((k) => k + 1)}
