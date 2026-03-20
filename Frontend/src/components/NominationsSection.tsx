@@ -89,7 +89,9 @@ export function NominationsSection({ currentUserClerkId, onNominationWindowChang
   const [showNominationForm, setShowNominationForm] = useState(false);
 
   // Open-window form state
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(() =>
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+  );
   const [openingWindow, setOpeningWindow] = useState(false);
 
   // Nomination form state
@@ -130,7 +132,7 @@ export function NominationsSection({ currentUserClerkId, onNominationWindowChang
       const result = await openNominationWindow(token, deadline);
       setData(result);
       setShowOpenWindowModal(false);
-      setDeadline("");
+      setDeadline(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open window");
     } finally {

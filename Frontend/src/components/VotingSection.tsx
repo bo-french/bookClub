@@ -200,7 +200,9 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const [showOpenModal, setShowOpenModal] = useState(false);
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(() =>
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+  );
   const [openingWindow, setOpeningWindow] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -233,7 +235,7 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
       if (!token) return;
       await openVotingWindow(token, deadline);
       setShowOpenModal(false);
-      setDeadline("");
+      setDeadline(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
       await fetchVoting();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open voting");
