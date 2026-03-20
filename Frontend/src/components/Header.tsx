@@ -17,8 +17,11 @@ export function Header() {
           <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
             Dashboard
           </Link>
-          <Link to="/Meeting" className="text-foreground/80 hover:text-foreground transition-colors">
-            Meeting
+          <Link to="/nominations-voting" className="text-foreground/80 hover:text-foreground transition-colors">
+            Nominations & Voting
+          </Link>
+          <Link to="/meetings" className="text-foreground/80 hover:text-foreground transition-colors">
+            Meetings
           </Link>
         </nav>
 
