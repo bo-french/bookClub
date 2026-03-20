@@ -9,6 +9,7 @@ import {
   type CurrentVotingResponse,
   type NomineeWithVotes,
 } from "@/lib/api";
+import { BookCover } from "@/components/BookCover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
@@ -72,10 +73,12 @@ function VoteBar({
 
   return (
     <div
-      className={`border rounded-lg p-4 flex flex-col gap-2 transition-colors ${
+      className={`border rounded-lg p-4 flex gap-3 transition-colors ${
         isUserVote ? "border-primary bg-primary/5" : "border-border"
       }`}
     >
+      <BookCover title={nominee.title} author={nominee.author} />
+      <div className="flex flex-col gap-2 min-w-0 flex-1">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-baseline gap-2">
@@ -112,6 +115,7 @@ function VoteBar({
       </div>
 
       <p className="text-xs text-muted-foreground">{pct}%</p>
+      </div>
     </div>
   );
 }

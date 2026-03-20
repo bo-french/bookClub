@@ -115,6 +115,17 @@ export function castVote(token: string, nomination_id: number): Promise<{ id: nu
   }, token);
 }
 
+// --- Books ---
+
+export function getBookCoverUrl(
+  token: string,
+  title: string,
+  author: string
+): Promise<{ cover_url: string | null }> {
+  const params = new URLSearchParams({ title, author });
+  return apiClient(`/books/cover?${params}`, {}, token);
+}
+
 export function closeNominationWindowEarly(token: string, id: number): Promise<{ window: NominationWindow }> {
   return apiClient(`/nomination-windows/${id}/close`, { method: 'POST' }, token);
 }

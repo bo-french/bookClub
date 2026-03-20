@@ -8,6 +8,7 @@ import healthRoutes from "./routes/health.js";
 import userRoutes from "./routes/users.js";
 import nominationRoutes from "./routes/nominations.js";
 import votingRoutes from "./routes/voting.js";
+import bookRoutes from "./routes/books.js";
 
 const fastify = Fastify({
   logger: true,
@@ -31,6 +32,7 @@ await fastify.register(healthRoutes);
 await fastify.register(userRoutes);
 await fastify.register(nominationRoutes);
 await fastify.register(votingRoutes);
+await fastify.register(bookRoutes);
 
 // --- Start server ---
 

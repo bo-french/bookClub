@@ -9,6 +9,7 @@ import {
   type CurrentWindowResponse,
   type Nomination,
 } from "@/lib/api";
+import { BookCover } from "@/components/BookCover";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,22 +25,25 @@ function NominationCard({ nomination }: { nomination: Nomination }) {
     [nomination.first_name, nomination.last_name].filter(Boolean).join(" ") ||
     "A member";
   return (
-    <div className="border border-border rounded-lg p-4 flex flex-col gap-1">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="font-semibold text-base">{nomination.title}</span>
-        <span className="text-sm text-muted-foreground shrink-0">
-          by {nomination.author}
-        </span>
-      </div>
-      <p className="text-sm text-foreground/80">{nomination.summary}</p>
-      {nomination.pitch && (
-        <p className="text-sm italic text-muted-foreground mt-1">
-          "{nomination.pitch}"
+    <div className="border border-border rounded-lg p-4 flex gap-3">
+      <BookCover title={nomination.title} author={nomination.author} />
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="font-semibold text-base">{nomination.title}</span>
+          <span className="text-sm text-muted-foreground shrink-0">
+            by {nomination.author}
+          </span>
+        </div>
+        <p className="text-sm text-foreground/80">{nomination.summary}</p>
+        {nomination.pitch && (
+          <p className="text-sm italic text-muted-foreground mt-1">
+            "{nomination.pitch}"
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          Nominated by {nominatorName}
         </p>
-      )}
-      <p className="text-xs text-muted-foreground mt-1">
-        Nominated by {nominatorName}
-      </p>
+      </div>
     </div>
   );
 }
