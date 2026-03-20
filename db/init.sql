@@ -51,3 +51,22 @@ CREATE TABLE IF NOT EXISTS nominations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE (window_id, nominated_by)
 );
+
+-- Voting windows: each tied to a nomination window
+CREATE TABLE IF NOT EXISTS voting_windows (
+  id SERIAL PRIMARY KEY,
+  nomination_window_id INTEGER NOT NULL REFERENCES nomination_windows(id),
+  opened_by INTEGER NOT NULL REFERENCES users(id),
+  deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Votes: one per user per voting window
+CREATE TABLE IF NOT EXISTS votes (
+  id SERIAL PRIMARY KEY,
+  voting_window_id INTEGER NOT NULL REFERENCES voting_windows(id),
+  voter_id INTEGER NOT NULL REFERENCES users(id),
+  nomination_id INTEGER NOT NULL REFERENCES nominations(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (voting_window_id, voter_id)
+);

@@ -143,4 +143,61 @@ export default async function nominationRoutes(fastify: FastifyInstance) {
       return nomination;
     }
   );
+
+  // POST /nomination-windows/:id/close
+  // Close the nomination window early (sets deadline to now).
+  fastify.post(
+    "/nomination-windows/:id/close",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      const [window] = await fastify.db`
+        SELECT id FROM nomination_windows WHERE id = ${id} AND deadline > NOW()
+      `;
+
+      if (!window) {
+        return reply.notFound("Active nomination window not found");
+      }
+
+      const [updated] = await fastify.db`
+        UPDATE nomination_windows
+        SET deadline = NOW() - interval '1 second'
+        WHERE id = ${id}
+        RETURNING id, opened_by, deadline, created_at, deadline > NOW() AS is_active
+      `;
+
+      return { window: updated };
+    }
+  );
+
+  // POST /nomination-windows/:id/cancel
+  // Cancel the nomination window and delete all associated nominations.
+  fastify.post(
+    "/nomination-windows/:id/cancel",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      const [window] = await fastify.db`
+        SELECT id FROM nomination_windows WHERE id = ${id} AND deadline > NOW()
+      `;
+
+      if (!window) {
+        return reply.notFound("Active nomination window not found");
+      }
+
+      // Delete in dependency order: votes → voting_windows → nominations → nomination_window
+      await fastify.db`
+        DELETE FROM votes WHERE voting_window_id IN (
+          SELECT id FROM voting_windows WHERE nomination_window_id = ${id}
+        )
+      `;
+      await fastify.db`DELETE FROM voting_windows WHERE nomination_window_id = ${id}`;
+      await fastify.db`DELETE FROM nominations WHERE window_id = ${id}`;
+      await fastify.db`DELETE FROM nomination_windows WHERE id = ${id}`;
+
+      return { success: true };
+    }
+  );
 }

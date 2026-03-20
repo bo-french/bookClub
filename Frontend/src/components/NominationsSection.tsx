@@ -4,6 +4,8 @@ import {
   getCurrentWindow,
   openNominationWindow,
   submitNomination,
+  closeNominationWindowEarly,
+  cancelNominationWindow,
   type CurrentWindowResponse,
   type Nomination,
 } from "@/lib/api";
@@ -14,6 +16,7 @@ import { Label } from "@radix-ui/react-label";
 
 interface Props {
   currentUserClerkId: string;
+  onNominationWindowChange?: () => void;
 }
 
 function NominationCard({ nomination }: { nomination: Nomination }) {
@@ -74,7 +77,7 @@ function Modal({
   );
 }
 
-export function NominationsSection({ currentUserClerkId }: Props) {
+export function NominationsSection({ currentUserClerkId, onNominationWindowChange }: Props) {
   const { getToken } = useAuth();
   const [data, setData] = useState<CurrentWindowResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +98,11 @@ export function NominationsSection({ currentUserClerkId }: Props) {
   const [nomSummary, setNomSummary] = useState("");
   const [nomPitch, setNomPitch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Close early / cancel state
+  const [closingEarly, setClosingEarly] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   async function fetchWindow() {
     try {
@@ -155,6 +163,39 @@ export function NominationsSection({ currentUserClerkId }: Props) {
     }
   }
 
+  async function handleCloseEarly() {
+    if (!data?.window) return;
+    setClosingEarly(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await closeNominationWindowEarly(token, data.window.id);
+      await fetchWindow();
+      onNominationWindowChange?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to close window");
+    } finally {
+      setClosingEarly(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!data?.window) return;
+    setCancelling(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await cancelNominationWindow(token, data.window.id);
+      setData({ window: null, nominations: [] });
+      setShowCancelConfirm(false);
+      onNominationWindowChange?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   if (loading) {
     return <p className="text-muted-foreground text-sm">Loading nominations...</p>;
   }
@@ -187,6 +228,28 @@ export function NominationsSection({ currentUserClerkId }: Props) {
           <Button size="sm" onClick={() => setShowOpenWindowModal(true)}>
             Open Nominations
           </Button>
+        )}
+
+        {/* Active window controls */}
+        {window && isActive && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={closingEarly}
+              onClick={handleCloseEarly}
+            >
+              {closingEarly ? "Closing..." : "Close Early"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setShowCancelConfirm(true)}
+            >
+              Cancel
+            </Button>
+          </div>
         )}
 
         {/* Closed window */}
@@ -388,6 +451,39 @@ export function NominationsSection({ currentUserClerkId }: Props) {
               ))}
             </div>
           )}
+        </Modal>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <Modal
+          title="Cancel nomination window?"
+          onClose={() => setShowCancelConfirm(false)}
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              This will permanently delete the nomination window and all{" "}
+              <span className="font-medium text-foreground">{nominations.length}</span>{" "}
+              nomination{nominations.length !== 1 ? "s" : ""} submitted so far. This cannot be undone.
+            </p>
+            <div className="flex gap-2 self-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                Keep it
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={cancelling}
+                onClick={handleCancel}
+              >
+                {cancelling ? "Cancelling..." : "Yes, cancel it"}
+              </Button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
