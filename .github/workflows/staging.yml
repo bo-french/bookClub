@@ -24,7 +24,16 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:staging
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --app bookclub-backend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:staging
+      - name: Deploy backend to staging
+        run: |
+          flyctl deploy --app bookclub-backend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:staging 2>&1 | tee deploy-output.txt
+          exit_code=${PIPESTATUS[0]}
+          if [ $exit_code -ne 0 ]; then
+            if grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
+              echo "::warning::Staging backend deployment failed — Fly.io staging machines may be stopped or scaled to zero. The Docker image was pushed successfully to DockerHub with the 'staging' tag. You can manually deploy by running: flyctl deploy --app bookclub-backend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-backend:staging"
+            fi
+            exit $exit_code
+          fi
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -44,6 +53,15 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:staging
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --app bookclub-frontend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:staging
+      - name: Deploy frontend to staging
+        run: |
+          flyctl deploy --app bookclub-frontend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:staging 2>&1 | tee deploy-output.txt
+          exit_code=${PIPESTATUS[0]}
+          if [ $exit_code -ne 0 ]; then
+            if grep -qi "no machines" deploy-output.txt || grep -qi "could not find" deploy-output.txt; then
+              echo "::warning::Staging frontend deployment failed — Fly.io staging machines may be stopped or scaled to zero. The Docker image was pushed successfully to DockerHub with the 'staging' tag. You can manually deploy by running: flyctl deploy --app bookclub-frontend-staging --image ${{ secrets.DOCKERHUB_USERNAME }}/bookclub-frontend:staging"
+            fi
+            exit $exit_code
+          fi
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
