@@ -7,6 +7,16 @@ on:
       - 'Backend/Dockerfile.prod'
       - 'Frontend/Dockerfile.prod'
       - '**.md'
+  workflow_dispatch:
+    inputs:
+      deploy_backend:
+        description: 'Deploy backend'
+        type: boolean
+        default: true
+      deploy_frontend:
+        description: 'Deploy frontend'
+        type: boolean
+        default: true
 
 jobs:
   detect-changes:
@@ -29,7 +39,7 @@ jobs:
 
   deploy-backend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: needs.detect-changes.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_backend)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +91,7 @@ jobs:
 
   deploy-frontend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true'
+    if: needs.detect-changes.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_frontend)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
