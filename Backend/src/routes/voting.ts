@@ -1,9 +1,64 @@
 import type { FastifyInstance } from "fastify";
 
+function computeIRVWinner(
+  ballots: { voter_id: number; nomination_id: number; rank: number }[],
+  nominationIds: number[]
+): { winner_id: number | null } {
+  if (nominationIds.length === 0) return { winner_id: null };
+  if (nominationIds.length === 1) return { winner_id: nominationIds[0] };
+
+  const ballotsByVoter = new Map<number, Map<number, number>>();
+  for (const { voter_id, nomination_id, rank } of ballots) {
+    if (!ballotsByVoter.has(voter_id)) {
+      ballotsByVoter.set(voter_id, new Map());
+    }
+    ballotsByVoter.get(voter_id)!.set(nomination_id, rank);
+  }
+
+  if (ballotsByVoter.size === 0) return { winner_id: null };
+
+  let remaining = new Set(nominationIds);
+
+  while (remaining.size > 1) {
+    const counts = new Map<number, number>();
+    for (const id of remaining) counts.set(id, 0);
+
+    for (const voterRankings of ballotsByVoter.values()) {
+      let bestRank = Infinity;
+      let bestCandidate: number | null = null;
+      for (const [nomId, rank] of voterRankings) {
+        if (remaining.has(nomId) && rank < bestRank) {
+          bestRank = rank;
+          bestCandidate = nomId;
+        }
+      }
+      if (bestCandidate !== null) {
+        counts.set(bestCandidate, (counts.get(bestCandidate) ?? 0) + 1);
+      }
+    }
+
+    const totalVoters = ballotsByVoter.size;
+    for (const [nomId, count] of counts) {
+      if (count > totalVoters / 2) {
+        return { winner_id: nomId };
+      }
+    }
+
+    const minVotes = Math.min(...counts.values());
+    for (const [nomId, count] of counts) {
+      if (count === minVotes) {
+        remaining.delete(nomId);
+      }
+    }
+  }
+
+  return { winner_id: remaining.size === 1 ? [...remaining][0] : null };
+}
+
 export default async function votingRoutes(fastify: FastifyInstance) {
   // GET /voting-windows/current
-  // Returns the current voting window (linked to the most recent nomination window),
-  // nominees with vote counts, and the current user's vote if any.
+  // Returns the current voting window, nominees with first-choice vote counts,
+  // the current user's rankings, unique voter count, and IRV result.
   fastify.get(
     "/voting-windows/current",
     { preHandler: fastify.authenticate },
@@ -22,7 +77,7 @@ export default async function votingRoutes(fastify: FastifyInstance) {
       `;
 
       if (!nominationWindow) {
-        return { voting_window: null, nomination_window: null, nominees: [], user_vote: null };
+        return { voting_window: null, nomination_window: null, nominees: [], user_rankings: null, voter_count: 0, irv_result: null };
       }
 
       const [votingWindow] = await fastify.db`
@@ -34,8 +89,6 @@ export default async function votingRoutes(fastify: FastifyInstance) {
         LIMIT 1
       `;
 
-      // Fetch nominees regardless of whether a voting window exists yet,
-      // so the "Open Voting" modal can show a summary of nominees.
       const nomineesBase = await fastify.db`
         SELECT
           n.id,
@@ -58,40 +111,60 @@ export default async function votingRoutes(fastify: FastifyInstance) {
           voting_window: null,
           nomination_window: nominationWindow,
           nominees: nomineesBase.map((n: any) => ({ ...n, vote_count: 0 })),
-          user_vote: null,
+          user_rankings: null,
+          voter_count: 0,
+          irv_result: null,
         };
       }
 
-      const nominees = await fastify.db`
-        SELECT
-          n.id,
-          n.title,
-          n.author,
-          n.summary,
-          n.pitch,
-          n.created_at,
-          u.clerk_id AS nominated_by_clerk_id,
-          u.first_name,
-          u.last_name,
-          COUNT(v.id)::int AS vote_count
-        FROM nominations n
-        JOIN users u ON n.nominated_by = u.id
-        LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${votingWindow.id}
-        WHERE n.window_id = ${nominationWindow.id}
-        GROUP BY n.id, u.clerk_id, u.first_name, u.last_name
-        ORDER BY vote_count DESC, n.created_at ASC
+      // First-choice vote counts per nominee
+      const firstChoiceCounts = await fastify.db`
+        SELECT nomination_id, COUNT(*)::int AS vote_count
+        FROM votes
+        WHERE voting_window_id = ${votingWindow.id} AND rank = 1
+        GROUP BY nomination_id
+      `;
+      const countMap = new Map(firstChoiceCounts.map((r: any) => [r.nomination_id, r.vote_count]));
+
+      const nominees = nomineesBase
+        .map((n: any) => ({ ...n, vote_count: countMap.get(n.id) ?? 0 }))
+        .sort((a: any, b: any) => b.vote_count - a.vote_count || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      // Unique voter count
+      const [{ voter_count }] = await fastify.db`
+        SELECT COUNT(DISTINCT voter_id)::int AS voter_count
+        FROM votes
+        WHERE voting_window_id = ${votingWindow.id}
       `;
 
-      let userVote = null;
+      // User's rankings
+      let userRankings = null;
       if (user) {
-        const [vote] = await fastify.db`
-          SELECT nomination_id FROM votes
+        const rankings = await fastify.db`
+          SELECT nomination_id, rank FROM votes
           WHERE voting_window_id = ${votingWindow.id} AND voter_id = ${user.id}
+          ORDER BY rank ASC
         `;
-        userVote = vote ?? null;
+        userRankings = rankings.length > 0 ? rankings : null;
       }
 
-      return { voting_window: votingWindow, nomination_window: nominationWindow, nominees, user_vote: userVote };
+      // IRV winner
+      const allBallots = await fastify.db`
+        SELECT voter_id, nomination_id, rank
+        FROM votes
+        WHERE voting_window_id = ${votingWindow.id}
+      `;
+      const nominationIds = nomineesBase.map((n: any) => n.id);
+      const irvResult = computeIRVWinner(allBallots, nominationIds);
+
+      return {
+        voting_window: votingWindow,
+        nomination_window: nominationWindow,
+        nominees,
+        user_rankings: userRankings,
+        voter_count,
+        irv_result: irvResult,
+      };
     }
   );
 
@@ -148,16 +221,18 @@ export default async function votingRoutes(fastify: FastifyInstance) {
   );
 
   // POST /votes
-  // Cast a vote for a nomination in the active voting window.
+  // Submit a ranked choice ballot for the active voting window.
+  // Body: { rankings: [{ nomination_id: number, rank: number }, ...] }
+  // Rankings must cover every nomination in the window with consecutive ranks starting at 1.
   fastify.post(
     "/votes",
     { preHandler: fastify.authenticate },
     async (request, reply) => {
       const { userId } = request.user;
-      const { nomination_id } = request.body as { nomination_id: number };
+      const { rankings } = request.body as { rankings: { nomination_id: number; rank: number }[] };
 
-      if (!nomination_id) {
-        return reply.badRequest("nomination_id is required");
+      if (!rankings || !Array.isArray(rankings) || rankings.length === 0) {
+        return reply.badRequest("rankings array is required");
       }
 
       const [user] = await fastify.db`
@@ -175,29 +250,50 @@ export default async function votingRoutes(fastify: FastifyInstance) {
         return reply.notFound("No active voting window");
       }
 
-      const [nomination] = await fastify.db`
-        SELECT id FROM nominations
-        WHERE id = ${nomination_id} AND window_id = ${activeVoting.nomination_window_id}
+      // Validate rankings cover exactly all nominations in this window
+      const nominations = await fastify.db`
+        SELECT id FROM nominations WHERE window_id = ${activeVoting.nomination_window_id}
       `;
-      if (!nomination) {
-        return reply.notFound("Nomination not found in active voting window");
+      const nominationIds = new Set(nominations.map((n: any) => n.id));
+
+      if (rankings.length !== nominationIds.size) {
+        return reply.badRequest(`Must rank all ${nominationIds.size} nominations`);
       }
 
+      for (const { nomination_id } of rankings) {
+        if (!nominationIds.has(nomination_id)) {
+          return reply.badRequest("Rankings include a nomination not in this voting window");
+        }
+      }
+
+      const sortedRanks = rankings.map((r) => r.rank).sort((a, b) => a - b);
+      for (let i = 0; i < sortedRanks.length; i++) {
+        if (sortedRanks[i] !== i + 1) {
+          return reply.badRequest("Ranks must be consecutive integers starting at 1");
+        }
+      }
+
+      // Check user hasn't already voted
       const [existingVote] = await fastify.db`
         SELECT id FROM votes
         WHERE voting_window_id = ${activeVoting.id} AND voter_id = ${user.id}
+        LIMIT 1
       `;
       if (existingVote) {
         return reply.conflict("You have already voted in this window");
       }
 
-      const [vote] = await fastify.db`
-        INSERT INTO votes (voting_window_id, voter_id, nomination_id)
-        VALUES (${activeVoting.id}, ${user.id}, ${nomination_id})
-        RETURNING id, nomination_id, created_at
-      `;
+      // Insert all rankings in a transaction
+      await fastify.db.begin(async (sql: any) => {
+        for (const { nomination_id, rank } of rankings) {
+          await sql`
+            INSERT INTO votes (voting_window_id, voter_id, nomination_id, rank)
+            VALUES (${activeVoting.id}, ${user.id}, ${nomination_id}, ${rank})
+          `;
+        }
+      });
 
-      return vote;
+      return { success: true };
     }
   );
 
