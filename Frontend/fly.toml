@@ -3,6 +3,7 @@ primary_region = "sjc"
 
 [env]
   NODE_ENV = "production"
+  BUN_PUBLIC_API_URL = "https://bookclub-backend.fly.dev"
 
 [http_service]
   internal_port = 3000

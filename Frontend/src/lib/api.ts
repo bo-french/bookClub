@@ -87,14 +87,20 @@ export interface VotingWindow {
 }
 
 export interface NomineeWithVotes extends Nomination {
-  vote_count: number;
+  vote_count: number; // first-choice votes
+}
+
+export interface IrvResult {
+  winner_id: number | null;
 }
 
 export interface CurrentVotingResponse {
   voting_window: VotingWindow | null;
   nomination_window: { id: number; deadline: string; is_active: boolean } | null;
   nominees: NomineeWithVotes[];
-  user_vote: { nomination_id: number } | null;
+  user_rankings: { nomination_id: number; rank: number }[] | null;
+  voter_count: number;
+  irv_result: IrvResult | null;
 }
 
 export function getCurrentVotingWindow(token: string): Promise<CurrentVotingResponse> {
@@ -108,10 +114,13 @@ export function openVotingWindow(token: string, deadline: string): Promise<{ vot
   }, token);
 }
 
-export function castVote(token: string, nomination_id: number): Promise<{ id: number; nomination_id: number; created_at: string }> {
+export function castVote(
+  token: string,
+  rankings: { nomination_id: number; rank: number }[]
+): Promise<{ success: boolean }> {
   return apiClient('/votes', {
     method: 'POST',
-    body: JSON.stringify({ nomination_id }),
+    body: JSON.stringify({ rankings }),
   }, token);
 }
 
