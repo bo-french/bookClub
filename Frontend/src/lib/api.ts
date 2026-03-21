@@ -117,10 +117,14 @@ export function castVote(token: string, nomination_id: number): Promise<{ id: nu
 
 // --- Past Results ---
 
-export interface PastVotingResponse {
-  voting_window: VotingWindow | null;
-  nomination_window: { id: number; deadline: string; created_at: string } | null;
+export interface PastVotingCycle {
+  voting_window: VotingWindow;
+  nomination_window: { id: number; deadline: string; created_at: string };
   nominees: NomineeWithVotes[];
+}
+
+export interface PastVotingResponse {
+  cycles: PastVotingCycle[];
 }
 
 export function getPastVotingResults(token: string): Promise<PastVotingResponse> {

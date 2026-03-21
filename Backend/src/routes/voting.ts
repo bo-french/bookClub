@@ -96,52 +96,55 @@ export default async function votingRoutes(fastify: FastifyInstance) {
   );
 
   // GET /voting-windows/past
-  // Returns the most recently completed voting cycle (closed voting window)
-  // with all nominees, vote counts, and the winner.
+  // Returns all completed voting cycles with nominees and vote counts.
   fastify.get(
     "/voting-windows/past",
     { preHandler: fastify.authenticate },
     async (_request, _reply) => {
-      // Find the most recent closed voting window
-      const [votingWindow] = await fastify.db`
+      const votingWindows = await fastify.db`
         SELECT id, nomination_window_id, opened_by, deadline, created_at,
                deadline > NOW() AS is_active
         FROM voting_windows
         ORDER BY deadline DESC
-        LIMIT 1
       `;
 
-      if (!votingWindow) {
-        return { voting_window: null, nomination_window: null, nominees: [] };
+      if (!votingWindows.length) {
+        return { cycles: [] };
       }
 
-      const [nominationWindow] = await fastify.db`
-        SELECT id, deadline, created_at
-        FROM nomination_windows
-        WHERE id = ${votingWindow.nomination_window_id}
-      `;
+      const cycles = await Promise.all(
+        votingWindows.map(async (vw: any) => {
+          const [nominationWindow] = await fastify.db`
+            SELECT id, deadline, created_at
+            FROM nomination_windows
+            WHERE id = ${vw.nomination_window_id}
+          `;
 
-      const nominees = await fastify.db`
-        SELECT
-          n.id,
-          n.title,
-          n.author,
-          n.summary,
-          n.pitch,
-          n.created_at,
-          u.clerk_id AS nominated_by_clerk_id,
-          u.first_name,
-          u.last_name,
-          COUNT(v.id)::int AS vote_count
-        FROM nominations n
-        JOIN users u ON n.nominated_by = u.id
-        LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${votingWindow.id}
-        WHERE n.window_id = ${votingWindow.nomination_window_id}
-        GROUP BY n.id, u.clerk_id, u.first_name, u.last_name
-        ORDER BY vote_count DESC, n.created_at ASC
-      `;
+          const nominees = await fastify.db`
+            SELECT
+              n.id,
+              n.title,
+              n.author,
+              n.summary,
+              n.pitch,
+              n.created_at,
+              u.clerk_id AS nominated_by_clerk_id,
+              u.first_name,
+              u.last_name,
+              COUNT(v.id)::int AS vote_count
+            FROM nominations n
+            JOIN users u ON n.nominated_by = u.id
+            LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${vw.id}
+            WHERE n.window_id = ${vw.nomination_window_id}
+            GROUP BY n.id, u.clerk_id, u.first_name, u.last_name
+            ORDER BY vote_count DESC, n.created_at ASC
+          `;
 
-      return { voting_window: votingWindow, nomination_window: nominationWindow, nominees };
+          return { voting_window: vw, nomination_window: nominationWindow, nominees };
+        })
+      );
+
+      return { cycles };
     }
   );
 
