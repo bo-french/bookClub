@@ -168,6 +168,59 @@ export default async function votingRoutes(fastify: FastifyInstance) {
     }
   );
 
+  // GET /voting-windows/past
+  // Returns all completed voting cycles with nominees and vote counts.
+  fastify.get(
+    "/voting-windows/past",
+    { preHandler: fastify.authenticate },
+    async (_request, _reply) => {
+      const votingWindows = await fastify.db`
+        SELECT id, nomination_window_id, opened_by, deadline, created_at,
+               deadline > NOW() AS is_active
+        FROM voting_windows
+        ORDER BY deadline DESC
+      `;
+
+      if (!votingWindows.length) {
+        return { cycles: [] };
+      }
+
+      const cycles = await Promise.all(
+        votingWindows.map(async (vw: any) => {
+          const [nominationWindow] = await fastify.db`
+            SELECT id, deadline, created_at
+            FROM nomination_windows
+            WHERE id = ${vw.nomination_window_id}
+          `;
+
+          const nominees = await fastify.db`
+            SELECT
+              n.id,
+              n.title,
+              n.author,
+              n.summary,
+              n.pitch,
+              n.created_at,
+              u.clerk_id AS nominated_by_clerk_id,
+              u.first_name,
+              u.last_name,
+              COUNT(v.id)::int AS vote_count
+            FROM nominations n
+            JOIN users u ON n.nominated_by = u.id
+            LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${vw.id}
+            WHERE n.window_id = ${vw.nomination_window_id}
+            GROUP BY n.id, u.clerk_id, u.first_name, u.last_name
+            ORDER BY vote_count DESC, n.created_at ASC
+          `;
+
+          return { voting_window: vw, nomination_window: nominationWindow, nominees };
+        })
+      );
+
+      return { cycles };
+    }
+  );
+
   // POST /voting-windows
   // Open a voting window for the most recently closed nomination window.
   fastify.post(

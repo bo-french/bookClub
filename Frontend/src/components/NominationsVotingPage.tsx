@@ -4,6 +4,7 @@ import { apiClient } from "@/lib/api";
 import { Header } from "./Header";
 import { NominationsSection } from "./NominationsSection";
 import { VotingSection } from "./VotingSection";
+import { PastNominationsSection } from "./PastNominationsSection";
 
 export function NominationsVotingPage() {
   const { getToken } = useAuth();
@@ -27,6 +28,7 @@ export function NominationsVotingPage() {
     <>
       <Header />
       <main className="min-h-screen p-6">
+        <PastNominationsSection />
         <NominationsSection
           currentUserClerkId={userClerkId}
           onNominationWindowChange={() => setVotingRefreshKey((k) => k + 1)}

@@ -124,6 +124,33 @@ export function castVote(
   }, token);
 }
 
+// --- Past Results ---
+
+export interface PastVotingCycle {
+  voting_window: VotingWindow;
+  nomination_window: { id: number; deadline: string; created_at: string };
+  nominees: NomineeWithVotes[];
+}
+
+export interface PastVotingResponse {
+  cycles: PastVotingCycle[];
+}
+
+export function getPastVotingResults(token: string): Promise<PastVotingResponse> {
+  return apiClient('/voting-windows/past', {}, token);
+}
+
+// --- Books ---
+
+export function getBookCoverUrl(
+  token: string,
+  title: string,
+  author: string
+): Promise<{ cover_url: string | null }> {
+  const params = new URLSearchParams({ title, author });
+  return apiClient(`/books/cover?${params}`, {}, token);
+}
+
 export function closeNominationWindowEarly(token: string, id: number): Promise<{ window: NominationWindow }> {
   return apiClient(`/nomination-windows/${id}/close`, { method: 'POST' }, token);
 }
