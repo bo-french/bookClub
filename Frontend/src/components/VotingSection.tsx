@@ -9,6 +9,7 @@ import {
   type CurrentVotingResponse,
   type NomineeWithVotes,
 } from "@/lib/api";
+import { BookCover } from "@/components/BookCover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
@@ -150,45 +151,48 @@ function VoteBar({
 
   return (
     <div
-      className={`border rounded-lg p-4 flex flex-col gap-2 transition-colors ${
+      className={`border rounded-lg p-4 flex gap-3 transition-colors ${
         isWinner ? "border-primary bg-primary/5" : "border-border"
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <div className="flex items-baseline gap-2">
-            <span className="font-semibold text-base truncate">{nominee.title}</span>
-            <span className="text-sm text-muted-foreground shrink-0">by {nominee.author}</span>
+      <BookCover title={nominee.title} author={nominee.author} />
+      <div className="flex flex-col gap-2 min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <div className="flex items-baseline gap-2">
+              <span className="font-semibold text-base truncate">{nominee.title}</span>
+              <span className="text-sm text-muted-foreground shrink-0">by {nominee.author}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Nominated by {nominatorName}</p>
           </div>
-          <p className="text-xs text-muted-foreground">Nominated by {nominatorName}</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-medium tabular-nums">
-            {nominee.vote_count} 1st-choice
-          </span>
-          {isWinner && (
-            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-              Winner
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-medium tabular-nums">
+              {nominee.vote_count} 1st-choice
             </span>
-          )}
-          {userRank !== null && (
-            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              Your #{userRank}
-            </span>
-          )}
+            {isWinner && (
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                Winner
+              </span>
+            )}
+            {userRank !== null && (
+              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                Your #{userRank}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            isWinner ? "bg-primary" : "bg-muted-foreground/40"
-          }`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              isWinner ? "bg-primary" : "bg-muted-foreground/40"
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
 
-      <p className="text-xs text-muted-foreground">{pct}% of 1st-choice votes</p>
+        <p className="text-xs text-muted-foreground">{pct}% of 1st-choice votes</p>
+      </div>
     </div>
   );
 }
