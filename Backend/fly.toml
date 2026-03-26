@@ -4,6 +4,7 @@ primary_region = "sjc"
 [env]
   NODE_ENV = "production"
   API_PORT = "4000"
+  CORS_ORIGIN = "https://bookclub-frontend.fly.dev"
 
 [http_service]
   internal_port = 4000

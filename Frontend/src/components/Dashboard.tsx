@@ -1,9 +1,10 @@
 import { useUser, useAuth, useClerk } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiClient, getCurrentWindow, getCurrentVotingWindow } from "@/lib/api";
+import { apiClient, getCurrentWindow, getCurrentVotingWindow, getCurrentMeetingWindow, getUpcomingMeetings, type UpcomingMeeting } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CalendarWidget } from "@/components/CalendarWidget";
 import { Header } from "./Header";
 
 interface UserInfo {
@@ -39,6 +40,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [actionsLoaded, setActionsLoaded] = useState(false);
+  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -53,10 +55,14 @@ export function Dashboard() {
         const data: UserInfo = await apiClient("/me", {}, token);
         setUserInfo(data);
 
-        const [nomData, votingData] = await Promise.all([
+        const [nomData, votingData, meetingData, meetingsData] = await Promise.all([
           getCurrentWindow(token),
           getCurrentVotingWindow(token),
+          getCurrentMeetingWindow(token).catch(() => null),
+          getUpcomingMeetings(token).catch(() => ({ meetings: [] })),
         ]);
+
+        setUpcomingMeetings(meetingsData.meetings);
 
         const pending: ActionItem[] = [];
 
@@ -78,6 +84,14 @@ export function Dashboard() {
             label: "Rank books for voting",
             description: "Voting is open. Rank the nominated books to cast your ballot.",
             href: "/nominations-voting",
+          });
+        }
+
+        if (meetingData?.window?.is_active && meetingData.user_votes.length === 0) {
+          pending.push({
+            label: "Vote on meeting time",
+            description: "A meeting poll is open. Mark which dates work for you.",
+            href: "/meetings",
           });
         }
 
@@ -130,7 +144,21 @@ export function Dashboard() {
         {/* Upcoming Meetings */}
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">Upcoming Meetings</h2>
-          <p className="text-sm text-muted-foreground">No upcoming meetings.</p>
+          {upcomingMeetings.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No upcoming meetings.</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {upcomingMeetings.map((meeting) => (
+                <CalendarWidget
+                  key={meeting.id}
+                  meetingDate={meeting.meeting_date}
+                  meetingTime={meeting.meeting_time}
+                  location={meeting.location}
+                  book={meeting.book}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Actions */}

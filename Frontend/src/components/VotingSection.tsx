@@ -157,15 +157,13 @@ function VoteBar({
     >
       <BookCover title={nominee.title} author={nominee.author} />
       <div className="flex flex-col gap-2 min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-base truncate">{nominee.title}</span>
-              <span className="text-sm text-muted-foreground shrink-0">by {nominee.author}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Nominated by {nominatorName}</p>
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-semibold text-base">{nominee.title}</span>
+            <span className="text-sm text-muted-foreground">by {nominee.author}</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <p className="text-xs text-muted-foreground">Nominated by {nominatorName}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-0.5">
             <span className="text-sm font-medium tabular-nums">
               {nominee.vote_count} 1st-choice
             </span>

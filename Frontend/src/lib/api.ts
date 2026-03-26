@@ -1,6 +1,4 @@
-const API_URL = typeof window !== 'undefined'
-  ? (window as any).__ENV__?.BUN_PUBLIC_API_URL || 'http://localhost:4000'
-  : process.env.BUN_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.BUN_PUBLIC_API_URL || 'http://localhost:4000';
 
 export async function apiClient(path: string, options: RequestInit = {}, token?: string | null) {
   const headers: Record<string, string> = {
@@ -191,4 +189,93 @@ export function setCurrentlyReading(
     method: 'POST',
     body: JSON.stringify(data),
   }, token);
+}
+
+// --- Meetings ---
+
+export interface MeetingWindow {
+  id: number;
+  opened_by: number;
+  deadline: string;
+  selected_option_id: number | null;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface MeetingOption {
+  id: number;
+  meeting_date: string; // YYYY-MM-DD
+  meeting_time: string; // HH:MM:SS
+  location: string;
+  vote_count: number;
+}
+
+export interface MeetingOptionDefault {
+  date: string;
+  time: string;
+  location: string;
+}
+
+export interface CurrentMeetingResponse {
+  window: MeetingWindow | null;
+  options: MeetingOption[];
+  user_votes: number[];
+  selected_book: { id: number; title: string; author: string } | null;
+}
+
+export interface UpcomingMeeting {
+  id: number;
+  option_id: number;
+  meeting_date: string;
+  meeting_time: string;
+  location: string;
+  book: { title: string; author: string } | null;
+}
+
+export function getCurrentMeetingWindow(token: string): Promise<CurrentMeetingResponse> {
+  return apiClient('/meeting-windows/current', {}, token);
+}
+
+export function getUpcomingMeetings(token: string): Promise<{ meetings: UpcomingMeeting[] }> {
+  return apiClient('/meeting-windows/upcoming', {}, token);
+}
+
+export function openMeetingWindow(
+  token: string,
+  options: MeetingOptionDefault[]
+): Promise<{ window: MeetingWindow; options: MeetingOption[]; user_votes: number[] }> {
+  return apiClient('/meeting-windows', {
+    method: 'POST',
+    body: JSON.stringify({ options }),
+  }, token);
+}
+
+export function castMeetingVotes(
+  token: string,
+  option_ids: number[]
+): Promise<{ success: boolean }> {
+  return apiClient('/meeting-votes', {
+    method: 'POST',
+    body: JSON.stringify({ option_ids }),
+  }, token);
+}
+
+export function closeMeetingWindowEarly(token: string, id: number): Promise<{ window: MeetingWindow }> {
+  return apiClient(`/meeting-windows/${id}/close`, { method: 'POST' }, token);
+}
+
+export function cancelMeetingWindow(token: string, id: number): Promise<{ success: boolean }> {
+  return apiClient(`/meeting-windows/${id}/cancel`, { method: 'POST' }, token);
+}
+
+export interface PastMeeting {
+  id: number;
+  meeting_date: string;
+  meeting_time: string;
+  location: string;
+  book: { title: string; author: string } | null;
+}
+
+export function getPastMeetings(token: string): Promise<{ meetings: PastMeeting[] }> {
+  return apiClient('/meeting-windows/past', {}, token);
 }
