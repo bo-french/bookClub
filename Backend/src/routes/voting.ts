@@ -232,7 +232,7 @@ export default async function votingRoutes(fastify: FastifyInstance) {
               COUNT(v.id)::int AS vote_count
             FROM nominations n
             JOIN users u ON n.nominated_by = u.id
-            LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${vw.id}
+            LEFT JOIN votes v ON v.nomination_id = n.id AND v.voting_window_id = ${vw.id} AND v.rank = 1
             WHERE n.window_id = ${vw.nomination_window_id}
             GROUP BY n.id, u.clerk_id, u.first_name, u.last_name
             ORDER BY vote_count DESC, n.created_at ASC
