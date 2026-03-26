@@ -236,7 +236,7 @@ export function MeetingPollSection() {
         )}
 
         {meetingWindow && isActive && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
@@ -393,7 +393,7 @@ export function MeetingPollSection() {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Option {i + 1}
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="flex flex-col gap-1.5">
                     <Label
                       htmlFor={`opt-date-${i}`}
