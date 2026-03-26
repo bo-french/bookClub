@@ -2,6 +2,7 @@ import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Dashboard } from "./components/Dashboard";
 import { NominationsVotingPage } from "./components/NominationsVotingPage";
+import { MeetingsPage } from "./components/MeetingsPage";
 import { SignInPage } from "./components/auth/SignInPage";
 import "./index.css";
 
@@ -22,6 +23,7 @@ export function App() {
           <Route path="/sign-in/*" element={<SignInPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/nominations-voting" element={<ProtectedRoute><NominationsVotingPage /></ProtectedRoute>} />
+          <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
