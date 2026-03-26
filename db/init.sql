@@ -72,3 +72,47 @@ CREATE TABLE IF NOT EXISTS votes (
   UNIQUE (voting_window_id, voter_id, nomination_id),
   UNIQUE (voting_window_id, voter_id, rank)
 );
+
+-- Meeting windows: tracks each meeting availability poll
+CREATE TABLE IF NOT EXISTS meeting_windows (
+  id SERIAL PRIMARY KEY,
+  opened_by INTEGER NOT NULL REFERENCES users(id),
+  deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  selected_option_id INTEGER, -- FK to meeting_options added below
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Meeting options: date/time/location choices for a poll
+CREATE TABLE IF NOT EXISTS meeting_options (
+  id SERIAL PRIMARY KEY,
+  window_id INTEGER NOT NULL REFERENCES meeting_windows(id) ON DELETE CASCADE,
+  meeting_date DATE NOT NULL,
+  meeting_time TIME NOT NULL DEFAULT '17:00:00',
+  location VARCHAR(500) NOT NULL DEFAULT 'TeaHaus',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add FK: meeting_windows.selected_option_id -> meeting_options.id
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_meeting_windows_selected_option'
+      AND table_name = 'meeting_windows'
+  ) THEN
+    ALTER TABLE meeting_windows
+      ADD CONSTRAINT fk_meeting_windows_selected_option
+      FOREIGN KEY (selected_option_id) REFERENCES meeting_options(id);
+  END IF;
+END;
+$$;
+
+-- Meeting votes: multi-select, one row per voter per option
+CREATE TABLE IF NOT EXISTS meeting_votes (
+  id SERIAL PRIMARY KEY,
+  window_id INTEGER NOT NULL REFERENCES meeting_windows(id) ON DELETE CASCADE,
+  option_id INTEGER NOT NULL REFERENCES meeting_options(id) ON DELETE CASCADE,
+  voter_id INTEGER NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (window_id, option_id, voter_id)
+);

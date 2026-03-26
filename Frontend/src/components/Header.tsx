@@ -7,20 +7,20 @@ export function Header() {
   const { signOut } = useClerk();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-primary/10 backdrop-blur">
       <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold tracking-tight">Book Club</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link to="/dashboard" className="text-foreground/80 hover:text-foreground transition-colors">
+          <Link to="/dashboard" className="text-foreground/70 hover:text-foreground transition-colors">
             Dashboard
           </Link>
-          <Link to="/nominations-voting" className="text-foreground/80 hover:text-foreground transition-colors">
+          <Link to="/nominations-voting" className="text-foreground/70 hover:text-foreground transition-colors">
             Nominations & Voting
           </Link>
-          <Link to="/meetings" className="text-foreground/80 hover:text-foreground transition-colors">
+          <Link to="/meetings" className="text-foreground/70 hover:text-foreground transition-colors">
             Meetings
           </Link>
         </nav>
@@ -30,7 +30,7 @@ export function Header() {
             <img
               src={user.imageUrl}
               alt={user.fullName || "User"}
-              className="w-8 h-8 rounded-full border border-muted"
+              className="w-8 h-8 rounded-full border border-border"
             />
           )}
           <Button variant="ghost" size="sm" onClick={() => signOut()}>
