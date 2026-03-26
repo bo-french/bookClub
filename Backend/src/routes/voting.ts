@@ -157,13 +157,14 @@ export default async function votingRoutes(fastify: FastifyInstance) {
       const nominationIds = nomineesBase.map((n: any) => n.id);
       const irvResult = computeIRVWinner(allBallots, nominationIds);
 
-      // Auto-promote winner to currently reading when voting closes by deadline
-      if (!votingWindow.is_active && irvResult.winner_id) {
+      // Auto-promote winner to currently reading when voting just closed (within 24 hours of deadline)
+      const deadlinePassed = !votingWindow.is_active;
+      const closedRecently = deadlinePassed && (Date.now() - new Date(votingWindow.deadline).getTime()) < 24 * 60 * 60 * 1000;
+      if (closedRecently && irvResult.winner_id) {
         const [alreadySet] = await fastify.db`
           SELECT id FROM currently_reading
           WHERE title = (SELECT title FROM nominations WHERE id = ${irvResult.winner_id})
             AND author = (SELECT author FROM nominations WHERE id = ${irvResult.winner_id})
-            AND is_active = TRUE
         `;
 
         if (!alreadySet) {
