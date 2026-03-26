@@ -88,6 +88,17 @@ CREATE TABLE IF NOT EXISTS currently_reading (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_currently_reading_active
   ON currently_reading (is_active) WHERE is_active = TRUE;
 
+-- Book comments: discussion tied to a currently_reading book
+CREATE TABLE IF NOT EXISTS book_comments (
+  id SERIAL PRIMARY KEY,
+  book_id INTEGER NOT NULL REFERENCES currently_reading(id) ON DELETE CASCADE,
+  author_id INTEGER NOT NULL REFERENCES users(id),
+  body TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_book_comments_book_id ON book_comments(book_id);
+
 -- Meeting windows: tracks each meeting availability poll
 CREATE TABLE IF NOT EXISTS meeting_windows (
   id SERIAL PRIMARY KEY,

@@ -191,6 +191,28 @@ export function setCurrentlyReading(
   }, token);
 }
 
+// --- Book Comments ---
+
+export interface BookComment {
+  id: number;
+  body: string;
+  created_at: string;
+  first_name: string | null;
+  last_name: string | null;
+  image_url: string | null;
+}
+
+export function getBookComments(token: string): Promise<{ comments: BookComment[] }> {
+  return apiClient('/currently-reading/comments', {}, token);
+}
+
+export function postBookComment(token: string, body: string): Promise<{ comment: BookComment }> {
+  return apiClient('/currently-reading/comments', {
+    method: 'POST',
+    body: JSON.stringify({ body }),
+  }, token);
+}
+
 // --- Meetings ---
 
 export interface MeetingWindow {

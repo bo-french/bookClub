@@ -24,6 +24,88 @@ export default async function currentlyReadingRoutes(fastify: FastifyInstance) {
     }
   );
 
+  // GET /currently-reading/comments — returns comments for the active book
+  fastify.get(
+    "/currently-reading/comments",
+    { preHandler: fastify.authenticate },
+    async (_request, reply) => {
+      const [book] = await fastify.db`
+        SELECT id FROM currently_reading WHERE is_active = TRUE LIMIT 1
+      `;
+
+      if (!book) {
+        return { comments: [] };
+      }
+
+      const comments = await fastify.db`
+        SELECT
+          bc.id,
+          bc.body,
+          bc.created_at,
+          u.first_name,
+          u.last_name,
+          u.image_url
+        FROM book_comments bc
+        JOIN users u ON u.id = bc.author_id
+        WHERE bc.book_id = ${book.id}
+        ORDER BY bc.created_at ASC
+      `;
+
+      return { comments };
+    }
+  );
+
+  // POST /currently-reading/comments — add a comment to the active book
+  fastify.post(
+    "/currently-reading/comments",
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { userId } = request.user;
+      const { body } = request.body as { body?: string };
+
+      if (!body || !body.trim()) {
+        return reply.badRequest("body is required");
+      }
+
+      const [book] = await fastify.db`
+        SELECT id FROM currently_reading WHERE is_active = TRUE LIMIT 1
+      `;
+
+      if (!book) {
+        return reply.notFound("No active currently reading book");
+      }
+
+      const [user] = await fastify.db`
+        SELECT id FROM users WHERE clerk_id = ${userId}
+      `;
+
+      if (!user) {
+        return reply.notFound("User not found");
+      }
+
+      const [comment] = await fastify.db`
+        INSERT INTO book_comments (book_id, author_id, body)
+        VALUES (${book.id}, ${user.id}, ${body.trim()})
+        RETURNING id, body, created_at
+      `;
+
+      const [full] = await fastify.db`
+        SELECT
+          bc.id,
+          bc.body,
+          bc.created_at,
+          u.first_name,
+          u.last_name,
+          u.image_url
+        FROM book_comments bc
+        JOIN users u ON u.id = bc.author_id
+        WHERE bc.id = ${comment.id}
+      `;
+
+      return { comment: full };
+    }
+  );
+
   // POST /currently-reading — set a new currently reading book (deactivates previous)
   fastify.post(
     "/currently-reading",
