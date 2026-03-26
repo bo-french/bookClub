@@ -196,11 +196,6 @@ BEGIN
     (vote_window_id, u7_id, nom1_id, 6),
     (vote_window_id, u7_id, nom3_id, 7);
 
-  -- ── Currently Reading (completed — is_active = false) ─────────────────────
-
-  INSERT INTO currently_reading (title, author, nominated_by, set_by, started_at, is_active)
-    VALUES ('A Gentleman in Moscow', 'Amor Towles', u6_id, u1_id, '2026-02-10 12:00:00+00', false);
-
   -- ── Meeting Window + March 13 Discussion Date ────────────────────────────
 
   INSERT INTO meeting_windows (opened_by, deadline, created_at)
