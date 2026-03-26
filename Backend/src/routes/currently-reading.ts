@@ -17,6 +17,14 @@ export default async function currentlyReadingRoutes(fastify: FastifyInstance) {
         FROM currently_reading cr
         JOIN users u ON u.id = cr.set_by
         WHERE cr.is_active = TRUE
+          AND NOT EXISTS (
+            SELECT 1
+            FROM meeting_windows mw
+            JOIN meeting_options mo ON mo.id = mw.selected_option_id
+            WHERE mw.selected_option_id IS NOT NULL
+              AND mo.meeting_date < CURRENT_DATE
+              AND mo.meeting_date >= cr.started_at::date
+          )
         LIMIT 1
       `;
 
