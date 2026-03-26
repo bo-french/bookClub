@@ -28,9 +28,9 @@ function NominationCard({ nomination }: { nomination: Nomination }) {
     <div className="border border-border rounded-lg p-4 flex gap-3">
       <BookCover title={nomination.title} author={nomination.author} />
       <div className="flex flex-col gap-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="font-semibold text-base">{nomination.title}</span>
-          <span className="text-sm text-muted-foreground shrink-0">
+          <span className="text-sm text-muted-foreground">
             by {nomination.author}
           </span>
         </div>
@@ -238,7 +238,7 @@ export function NominationsSection({ currentUserClerkId, onNominationWindowChang
 
         {/* Active window controls */}
         {window && isActive && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
@@ -260,7 +260,7 @@ export function NominationsSection({ currentUserClerkId, onNominationWindowChang
 
         {/* Closed window */}
         {window && !isActive && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
