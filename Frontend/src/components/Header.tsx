@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useState, useEffect } from "react";
+import { useUser, useClerk, useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { getCurrentlyReading, type CurrentlyReadingBook } from "@/lib/api";
 
 const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard" },
+  { to: "/currently-reading", label: "Currently Reading" },
   { to: "/nominations-voting", label: "Nominations & Voting" },
   { to: "/meetings", label: "Meetings" },
 ];
@@ -12,8 +14,24 @@ const NAV_LINKS = [
 export function Header() {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentBook, setCurrentBook] = useState<CurrentlyReadingBook | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const data = await getCurrentlyReading(token);
+        setCurrentBook(data.book);
+      } catch {
+        // fail silently
+      }
+    }
+    load();
+  }, [getToken]);
 
   return (
     <>
@@ -65,6 +83,20 @@ export function Header() {
           </div>
         </div>
       </header>
+
+      {/* Currently reading banner */}
+      {currentBook && (
+        <div className="sticky top-14 z-40 w-full border-b border-border bg-primary/5 backdrop-blur">
+          <Link
+            to="/currently-reading"
+            className="flex items-center gap-2 px-6 py-1.5 text-sm text-foreground/80 hover:text-foreground transition-colors"
+          >
+            <span className="text-muted-foreground">Now reading:</span>
+            <span className="font-medium truncate">{currentBook.title}</span>
+            <span className="text-muted-foreground hidden sm:inline">by {currentBook.author}</span>
+          </Link>
+        </div>
+      )}
 
       {/* Mobile side panel */}
       {menuOpen && (

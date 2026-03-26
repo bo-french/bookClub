@@ -157,6 +157,31 @@ export default async function votingRoutes(fastify: FastifyInstance) {
       const nominationIds = nomineesBase.map((n: any) => n.id);
       const irvResult = computeIRVWinner(allBallots, nominationIds);
 
+      // Auto-promote winner to currently reading when voting closes by deadline
+      if (!votingWindow.is_active && irvResult.winner_id) {
+        const [alreadySet] = await fastify.db`
+          SELECT id FROM currently_reading
+          WHERE title = (SELECT title FROM nominations WHERE id = ${irvResult.winner_id})
+            AND author = (SELECT author FROM nominations WHERE id = ${irvResult.winner_id})
+            AND is_active = TRUE
+        `;
+
+        if (!alreadySet) {
+          const [winnerNom] = await fastify.db`
+            SELECT title, author, nominated_by FROM nominations WHERE id = ${irvResult.winner_id}
+          `;
+          if (winnerNom) {
+            await fastify.db`
+              UPDATE currently_reading SET is_active = FALSE WHERE is_active = TRUE
+            `;
+            await fastify.db`
+              INSERT INTO currently_reading (title, author, nominated_by, set_by)
+              VALUES (${winnerNom.title}, ${winnerNom.author}, ${winnerNom.nominated_by}, ${votingWindow.opened_by})
+            `;
+          }
+        }
+      }
+
       return {
         voting_window: votingWindow,
         nomination_window: nominationWindow,
@@ -373,6 +398,40 @@ export default async function votingRoutes(fastify: FastifyInstance) {
         RETURNING id, nomination_window_id, opened_by, deadline, created_at,
                   deadline > NOW() AS is_active
       `;
+
+      // Auto-promote IRV winner to currently reading
+      const nominations = await fastify.db`
+        SELECT id FROM nominations WHERE window_id = ${updated.nomination_window_id}
+      `;
+      const nominationIds = nominations.map((n: any) => n.id);
+
+      const allBallots = await fastify.db`
+        SELECT voter_id, nomination_id, rank
+        FROM votes
+        WHERE voting_window_id = ${updated.id}
+      `;
+
+      const { winner_id } = computeIRVWinner(allBallots, nominationIds);
+
+      if (winner_id) {
+        const [winnerNom] = await fastify.db`
+          SELECT title, author, nominated_by FROM nominations WHERE id = ${winner_id}
+        `;
+        const { userId } = request.user;
+        const [user] = await fastify.db`
+          SELECT id FROM users WHERE clerk_id = ${userId}
+        `;
+
+        if (winnerNom && user) {
+          await fastify.db`
+            UPDATE currently_reading SET is_active = FALSE WHERE is_active = TRUE
+          `;
+          await fastify.db`
+            INSERT INTO currently_reading (title, author, nominated_by, set_by)
+            VALUES (${winnerNom.title}, ${winnerNom.author}, ${winnerNom.nominated_by}, ${user.id})
+          `;
+        }
+      }
 
       return { voting_window: updated };
     }

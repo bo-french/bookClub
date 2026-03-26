@@ -378,7 +378,7 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
 
           {/* Winner / current leader callout */}
           {!isVotingActive && winner && (
-            <div className="rounded-lg border border-primary bg-primary/5 px-4 py-3 flex items-baseline justify-between gap-2">
+            <div className="rounded-lg border border-primary bg-primary/5 px-4 py-3 flex items-center justify-between gap-2">
               <div>
                 <p className="text-xs text-primary uppercase tracking-wide font-medium mb-0.5">
                   Winner (ranked choice)
@@ -386,6 +386,9 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
                 <p className="font-semibold">{winner.title}</p>
                 <p className="text-sm text-muted-foreground">by {winner.author}</p>
               </div>
+              <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full shrink-0">
+                Now reading
+              </span>
             </div>
           )}
 
