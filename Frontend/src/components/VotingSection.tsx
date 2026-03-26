@@ -6,7 +6,6 @@ import {
   castVote,
   closeVotingWindowEarly,
   cancelVotingWindow,
-  setCurrentlyReading,
   type CurrentVotingResponse,
   type NomineeWithVotes,
 } from "@/lib/api";
@@ -212,8 +211,6 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
   const [closingEarly, setClosingEarly] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [settingReading, setSettingReading] = useState(false);
-  const [readingSet, setReadingSet] = useState(false);
 
   async function fetchVoting() {
     try {
@@ -291,21 +288,6 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
       setError(err instanceof Error ? err.message : "Failed to submit rankings");
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleSetCurrentlyReading() {
-    if (!winner) return;
-    setSettingReading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      await setCurrentlyReading(token, { title: winner.title, author: winner.author });
-      setReadingSet(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to set currently reading");
-    } finally {
-      setSettingReading(false);
     }
   }
 
@@ -404,20 +386,9 @@ export function VotingSection({ currentUserClerkId, refreshKey }: Props) {
                 <p className="font-semibold">{winner.title}</p>
                 <p className="text-sm text-muted-foreground">by {winner.author}</p>
               </div>
-              {readingSet ? (
-                <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full shrink-0">
-                  Now reading
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  disabled={settingReading}
-                  onClick={handleSetCurrentlyReading}
-                  className="shrink-0"
-                >
-                  {settingReading ? "Setting..." : "Start Reading"}
-                </Button>
-              )}
+              <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full shrink-0">
+                Now reading
+              </span>
             </div>
           )}
 
