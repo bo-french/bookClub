@@ -22,6 +22,16 @@ export default async function meetingRoutes(fastify: FastifyInstance) {
         return { window: null, options: [], user_votes: [], selected_book: null };
       }
 
+      // If the meeting has already happened, treat it as no current window
+      if (window.selected_option_id !== null) {
+        const [selectedOption] = await fastify.db`
+          SELECT meeting_date FROM meeting_options WHERE id = ${window.selected_option_id}
+        `;
+        if (selectedOption && selectedOption.meeting_date < new Date()) {
+          return { window: null, options: [], user_votes: [], selected_book: null };
+        }
+      }
+
       // Auto-select winner when poll expires without being manually closed
       if (!window.is_active && window.selected_option_id === null) {
         const [winner] = await fastify.db`
