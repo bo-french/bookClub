@@ -88,6 +88,10 @@ jobs:
             sleep 10
           done
           echo "::warning::Backend deployed but health check timed out. The Fly.io machine may still be starting up (auto_stop is enabled, so cold starts are expected)."
+      - name: Run database seeder
+        run: |
+          sudo apt-get install -y postgresql-client -q
+          psql ${{ secrets.DATABASE_URL }} -f db/seed.sql
 
   deploy-frontend:
     needs: detect-changes
