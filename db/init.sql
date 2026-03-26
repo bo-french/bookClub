@@ -72,3 +72,18 @@ CREATE TABLE IF NOT EXISTS votes (
   UNIQUE (voting_window_id, voter_id, nomination_id),
   UNIQUE (voting_window_id, voter_id, rank)
 );
+
+-- Currently reading: tracks the book the club is currently reading (only one active at a time)
+CREATE TABLE IF NOT EXISTS currently_reading (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  nominated_by INTEGER REFERENCES users(id),
+  set_by INTEGER NOT NULL REFERENCES users(id),
+  started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Only one book can be active at a time
+CREATE UNIQUE INDEX IF NOT EXISTS idx_currently_reading_active
+  ON currently_reading (is_active) WHERE is_active = TRUE;

@@ -166,3 +166,29 @@ export function closeVotingWindowEarly(token: string, id: number): Promise<{ vot
 export function cancelVotingWindow(token: string, id: number): Promise<{ success: boolean }> {
   return apiClient(`/voting-windows/${id}/cancel`, { method: 'POST' }, token);
 }
+
+// --- Currently Reading ---
+
+export interface CurrentlyReadingBook {
+  id: number;
+  title: string;
+  author: string;
+  started_at: string;
+  read_by: string | null;
+  set_by_first_name: string | null;
+  set_by_last_name: string | null;
+}
+
+export function getCurrentlyReading(token: string): Promise<{ book: CurrentlyReadingBook | null }> {
+  return apiClient('/currently-reading', {}, token);
+}
+
+export function setCurrentlyReading(
+  token: string,
+  data: { title: string; author: string }
+): Promise<{ book: CurrentlyReadingBook }> {
+  return apiClient('/currently-reading', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, token);
+}
