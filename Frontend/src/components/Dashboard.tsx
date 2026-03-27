@@ -137,15 +137,15 @@ export function Dashboard() {
       <Header />
       <main className="min-h-screen p-6 max-w-2xl mx-auto flex flex-col gap-10">
         {/* Greeting */}
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-4xl font-bold tracking-tight">
           {getGreeting()}, {displayName}.
         </h1>
 
         {/* Upcoming Meetings */}
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Upcoming Meetings</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-bold uppercase tracking-wide text-primary">Upcoming Meetings</h2>
           {upcomingMeetings.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No upcoming meetings.</p>
+            <p className="text-sm text-muted-foreground italic">No upcoming meetings.</p>
           ) : (
             <div className="flex flex-wrap gap-3">
               {upcomingMeetings.map((meeting) => (
@@ -162,22 +162,22 @@ export function Dashboard() {
         </section>
 
         {/* Actions */}
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Actions</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-bold uppercase tracking-wide text-primary">Actions</h2>
           {!actionsLoaded ? null : actions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground italic">
               You're all caught up — nothing needs your attention right now.
             </p>
           ) : (
             <div className="flex flex-col gap-3">
               {actions.map((action) => (
                 <Link key={action.label} to={action.href}>
-                  <div className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors flex items-center justify-between gap-4">
+                  <div className="border-2 border-primary/20 rounded-lg p-4 hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between gap-4">
                     <div className="flex flex-col gap-0.5">
-                      <p className="font-medium text-sm">{action.label}</p>
+                      <p className="font-bold text-sm">{action.label}</p>
                       <p className="text-sm text-muted-foreground">{action.description}</p>
                     </div>
-                    <span className="text-muted-foreground shrink-0">→</span>
+                    <span className="text-primary font-bold shrink-0">→</span>
                   </div>
                 </Link>
               ))}
