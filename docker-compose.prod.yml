@@ -1,10 +1,7 @@
 services:
   backend:
-    build:
-      context: ./Backend
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/bookclub-backend:latest
     restart: unless-stopped
-    command: ["bun", "src/server.ts"]
     ports:
       - "${API_PORT:-4000}:4000"
     environment:
@@ -15,11 +12,8 @@ services:
       API_PORT: 4000
 
   frontend:
-    build:
-      context: ./Frontend
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/bookclub-frontend:latest
     restart: unless-stopped
-    command: ["bun", "src/index.tsx"]
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
@@ -28,4 +22,3 @@ services:
       NODE_ENV: production
     depends_on:
       - backend
-
